@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>لوحة تحليلات الاحتياجات التدريبية</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="assets/logo.png">
+</head>
+<body>
+
+<header class="hero bar">
+  <div class="inner">
+    <div class="logo"><img src="assets/logo.png" alt="شعار المدرسة"></div>
+    <div>
+      <h1>لوحة تحليلات الاحتياجات التدريبية</h1>
+      <div class="sub">الهيئة التعليمية · <span id="schoolName"></span></div>
+    </div>
+    <span class="spacer"></span>
+    <button class="btn out no-print" id="logoutBtn" type="button" hidden>خروج</button>
+  </div>
+</header>
+
+<!-- ============ الدخول ============ -->
+<section class="card login" id="loginBox">
+  <h2 style="justify-content:center">دخول الإدارة</h2>
+  <p class="hint" style="margin:0">هذه الصفحة مخصصة لمن يحق له الاطلاع على النتائج.</p>
+  <form id="loginForm" autocomplete="off">
+    <input type="password" id="pw" placeholder="كلمة المرور" aria-label="كلمة المرور" required>
+    <button class="btn primary" type="submit" id="loginBtn">دخول</button>
+  </form>
+  <div id="loginMsg"></div>
+</section>
+
+<!-- ============ اللوحة ============ -->
+<main class="wide" id="dash" hidden>
+  <div class="toolbar no-print">
+    <select id="roleFilter" aria-label="تصفية حسب الوظيفة"></select>
+    <button class="btn primary small" id="refreshBtn" type="button">↻ تحديث</button>
+    <button class="btn coral small" id="csvBtn" type="button">⬇ تصدير CSV (Excel)</button>
+    <button class="btn ghost small" id="printBtn" type="button">🖨 طباعة / PDF</button>
+    <span class="spacer"></span>
+    <span class="stamp" id="stamp"></span>
+  </div>
+
+  <div id="emptyState" class="panel-card empty" hidden>
+    <h2>لا توجد إجابات بعد</h2>
+    <p>ستظهر الإحصائيات هنا بمجرد وصول أول مشاركة.</p>
+  </div>
+
+  <div id="content">
+    <div class="kpis" id="kpis"></div>
+
+    <div class="tabs no-print" id="mainTabs" role="tablist">
+      <button class="tab" role="tab" data-p="0" aria-selected="true" type="button">نظرة عامة</button>
+      <button class="tab" role="tab" data-p="1" aria-selected="false" type="button">ترتيب الاحتياجات</button>
+      <button class="tab" role="tab" data-p="2" aria-selected="false" type="button">التفضيلات</button>
+      <button class="tab" role="tab" data-p="3" aria-selected="false" type="button">الملاحظات</button>
+    </div>
+
+    <div data-panel="0">
+      <section class="panel-card">
+        <h2>أبرز النتائج</h2>
+        <p class="hint">ملخص يُولَّد تلقائيًا (مستوى الحاجة من ٥، والأعلى = حاجة أكبر).</p>
+        <ul class="insights" id="insights"></ul>
+      </section>
+      <div class="grid2">
+        <section class="panel-card"><h2>متوسط الحاجة في كل محور</h2><p class="hint">من ١ إلى ٥.</p><div id="axisBars"></div></section>
+        <section class="panel-card"><h2>أعلى ٥ احتياجات</h2><p class="hint">حسب التصفية الحالية.</p><div id="topBars"></div></section>
+      </div>
+      <section class="panel-card">
+        <h2>مقارنة الوظائف</h2>
+        <p class="hint">متوسط الحاجة في كل محور (يشمل الجميع دون تأثر بالتصفية).</p>
+        <div class="tbl-scroll"><table class="tbl" id="roleTable"></table></div>
+      </section>
+      <div class="grid2">
+        <section class="panel-card"><h2>المشاركات حسب الوظيفة</h2><div id="roleDonut"></div></section>
+        <section class="panel-card"><h2>المشاركات حسب المرحلة</h2><div id="stageDonut"></div></section>
+        <section class="panel-card"><h2>المشاركات حسب الخبرة</h2><div id="expDonut"></div></section>
+        <section class="panel-card"><h2>برامج حضرنها العام الماضي</h2><div id="attDonut"></div></section>
+      </div>
+    </div>
+
+    <div data-panel="1" hidden>
+      <section class="panel-card">
+        <h2>ترتيب المهارات حسب الحاجة التدريبية</h2>
+        <p class="hint">من الأعلى حاجة إلى الأدنى. «ملحّة» تعني ٤ أو ٥ في المقياس.</p>
+        <div id="rankList"></div>
+      </section>
+      <section class="panel-card">
+        <h2>توزيع الإجابات على كل مهارة</h2>
+        <div class="legend" id="legend"></div>
+        <div id="statements"></div>
+      </section>
+    </div>
+
+    <div data-panel="2" hidden>
+      <div class="grid2" id="prefGrid"></div>
+    </div>
+
+    <div data-panel="3" hidden>
+      <section class="panel-card">
+        <h2>الإجابات المفتوحة</h2>
+        <div class="tabs" id="openTabs" role="tablist" style="margin-top:10px"></div>
+        <div class="toolbar" style="margin:0 0 12px">
+          <input type="search" id="openSearch" placeholder="بحث في الإجابات…" aria-label="بحث">
+          <span class="stamp" id="openCount"></span>
+        </div>
+        <div class="answers" id="answers"></div>
+      </section>
+      <section class="panel-card"><h2>المشاركات عبر الأيام</h2><div class="spark" id="spark"></div><div class="spark-labels" id="sparkLabels"></div></section>
+    </div>
+  </div>
+</main>
+
+<footer class="no-print" id="footer"></footer>
+
+<script src="config.js"></script>
+<script src="analysis.js"></script>
+<script>
+(function () {
+  "use strict";
+  var C = window.SURVEY_CONFIG, A = window.SurveyAnalysis;
+  var PW_KEY = "needs_dash_pw";
+  var $ = function (id) { return document.getElementById(id); };
+  var AR = "٠١٢٣٤٥٦٧٨٩";
+  function ar(n) { return String(n).replace(/\d/g, function (d) { return AR[d]; }); }
+  function fmt(x, d) { return x == null ? "—" : ar(Number(x).toFixed(d == null ? 1 : d)).replace(".", "\u066B"); }   // فاصلة عشرية عربية: النقطة العادية تشبه الصفر ٠ في الخطوط العربية
+  function esc(s) { var d = document.createElement("div"); d.textContent = String(s == null ? "" : s); return d.innerHTML; }
+  function pct(a, b) { return b ? Math.round(a / b * 100) : 0; }
+
+  $("schoolName").textContent = C.SCHOOL_NAME;
+
+  var state = { rows: [], res: null, openTab: 0, generated: "", role: "" };
+  var PALETTE = ["#5a5f8f", "#9aa5cf", "#6fa3a0", "#b58fb0", "#c9a27a", "#8a93b3"];
+  var SCALE_CLS = ["", "c1", "c2", "c3", "c4", "c5"];
+  var NEED_CLS = { 1: "c5", 2: "c4", 3: "c3", 4: "c2", 5: "c1" };   // الحاجة الأعلى = لون أدفأ
+
+  /* ---------- الدخول ---------- */
+  function msg(html) { $("loginMsg").innerHTML = html ? '<div class="notice error">' + html + "</div>" : ""; }
+  function fetchResults(password) {
+    return fetch(C.SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "results", password: password }) })
+      .then(function (r) { return r.json(); });
+  }
+  function enter(rows, generated) {
+    state.rows = rows; state.generated = generated || "";
+    $("loginBox").hidden = true; $("dash").hidden = false; $("logoutBtn").hidden = false;
+    fillRoleFilter(); render();
+  }
+  $("loginForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (!C.SCRIPT_URL) { msg("لم يُربط الموقع بجدول Google Sheets بعد. أضيفي رابط السكربت في config.js."); return; }
+    var pw = $("pw").value;
+    $("loginBtn").disabled = true; $("loginBtn").textContent = "جارٍ التحقق…"; msg("");
+    fetchResults(pw).then(function (res) {
+      if (res && res.ok) { try { sessionStorage.setItem(PW_KEY, pw); } catch (x) {} enter(res.rows || [], res.generated); }
+      else if (res && res.error === "unauthorized") msg("كلمة المرور غير صحيحة.");
+      else msg("حدث خطأ غير متوقع. حاولي مرة أخرى.");
+    }).catch(function () { msg("تعذّر الاتصال بالخادم. تأكدي من الإنترنت ومن صحة رابط السكربت في config.js."); })
+      .then(function () { $("loginBtn").disabled = false; $("loginBtn").textContent = "دخول"; });
+  });
+  $("logoutBtn").addEventListener("click", function () { try { sessionStorage.removeItem(PW_KEY); } catch (x) {} window.location.reload(); });
+  $("refreshBtn").addEventListener("click", function () {
+    var pw = ""; try { pw = sessionStorage.getItem(PW_KEY) || ""; } catch (x) {}
+    var b = $("refreshBtn"); b.disabled = true; b.textContent = "جارٍ التحديث…";
+    fetchResults(pw).then(function (res) {
+      if (res && res.ok) { state.rows = res.rows || []; state.generated = res.generated || ""; fillRoleFilter(); render(); }
+      else { try { sessionStorage.removeItem(PW_KEY); } catch (x) {} window.location.reload(); }
+    }).catch(function () { alert("تعذّر التحديث. تأكدي من الاتصال بالإنترنت."); })
+      .then(function () { b.disabled = false; b.textContent = "↻ تحديث"; });
+  });
+  $("csvBtn").addEventListener("click", function () {
+    var blob = new Blob([A.toCSV(state.rows, C)], { type: "text/csv;charset=utf-8" });
+    var a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+    a.download = "training-needs-" + new Date().toISOString().slice(0, 10) + ".csv";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+  });
+  $("printBtn").addEventListener("click", function () { window.print(); });
+  function fillRoleFilter() {
+    $("roleFilter").innerHTML = '<option value="">كل الوظائف</option>' + C.ROLES.map(function (r) {
+      return '<option value="' + esc(r.code) + '"' + (r.code === state.role ? " selected" : "") + ">" + esc(r.label) + "</option>";
+    }).join("");
+  }
+  $("roleFilter").addEventListener("change", function () { state.role = this.value; render(); });
+
+  /* ---------- مساعدات الرسم ---------- */
+  function pair(a, b) { return "<b>" + a + "</b><small>" + b + "</small>"; }
+  function hbar(label, p, num, gold) {
+    return '<div class="hbar"><span>' + esc(label) + '</span><div class="track"><div class="fill' + (gold ? " coral" : "") + '" style="width:' + Math.max(0, Math.min(100, p)) + '%"></div></div><span class="num">' + num + "</span></div>";
+  }
+  function donut(items, centerNum, centerLabel) {
+    var total = items.reduce(function (s, it) { return s + it.count; }, 0);
+    var R = 44, CIRC = 2 * Math.PI * R, acc = 0, segs = "";
+    items.forEach(function (it) {
+      if (!it.count || !total) return;
+      var len = it.count / total * CIRC;
+      segs += '<circle cx="60" cy="60" r="' + R + '" fill="none" stroke="' + it.color + '" stroke-width="22" stroke-dasharray="' + len.toFixed(2) + " " + (CIRC - len).toFixed(2) +
+        '" stroke-dashoffset="' + (-acc).toFixed(2) + '" transform="rotate(-90 60 60)"><title>' + esc(it.label) + ": " + ar(it.count) + "</title></circle>";
+      acc += len;
+    });
+    var svg = '<svg viewBox="0 0 120 120" role="img" aria-label="رسم دائري"><circle cx="60" cy="60" r="' + R + '" fill="none" stroke="#e9ebf5" stroke-width="22"/>' + segs +
+      '<text x="60" y="58" text-anchor="middle" font-size="20" font-weight="700" fill="#3b3f66" style="font-family:inherit">' + ar(centerNum) + "</text>" +
+      '<text x="60" y="76" text-anchor="middle" font-size="9" fill="#656a85" style="font-family:inherit">' + esc(centerLabel) + "</text></svg>";
+    var leg = items.map(function (it) {
+      return '<div class="dl"><i style="background:' + it.color + '"></i><span>' + esc(it.label) + '</span><span class="dv">' + ar(it.count) + " (" + ar(pct(it.count, total)) + "٪)</span></div>";
+    }).join("");
+    return '<div class="donut-wrap"><div class="donut">' + svg + '</div><div class="dlegend">' + leg + "</div></div>";
+  }
+  function dn(list, counts, n, label) { return donut(list.map(function (o, i) { return { label: o.label, count: counts[o.code], color: PALETTE[i % PALETTE.length] }; }), n, label); }
+  function heat(v) {   // الحاجة الأعلى = أدفأ (أحمر)، الأدنى = أخضر
+    if (v == null) return "background:#f1f3f8;color:#8a93a8";
+    var t = Math.max(0, Math.min(1, (v - 1) / 4));
+    var stops = [[27, 122, 75], [120, 185, 146], [236, 230, 210], [235, 167, 101], [196, 69, 45]];
+    var pos = t * 4, i = Math.min(3, Math.floor(pos)), f = pos - i;
+    var c = stops[i].map(function (s, k) { return Math.round(s + (stops[i + 1][k] - s) * f); });
+    var lum = 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
+    return "background:rgb(" + c.join(",") + ");color:" + (lum < 150 ? "#fff" : "#272a40");
+  }
+
+  /* ---------- الرسم الرئيسي ---------- */
+  function render() {
+    var res = A.compute(state.rows, C, state.role);
+    state.res = res;
+    $("stamp").innerHTML = state.generated ? 'آخر تحديث: <bdi dir="ltr">' + esc(ar(state.generated)) + "</bdi>" : "";
+    $("emptyState").hidden = res.total > 0;
+    $("content").hidden = res.total === 0;
+    if (res.total === 0) return;
+
+    var topS = res.ranked[0];
+    $("kpis").innerHTML = [
+      { v: ar(res.n), l: state.role ? "عدد المشاركات لهذه الوظيفة" : "إجمالي المشاركات" },
+      { v: fmt(res.overallMean, 2), l: "متوسط الحاجة العام (من ٥)", c: true },
+      { v: ar(res.urgentPct) + "٪", l: "متوسط حاجتهن ٤ فأكثر" },
+      { v: topS ? '<span style="font-size:1.05rem;line-height:1.6;display:block">' + esc(topS.text) + "</span>" : "—", l: "أعلى حاجة", c: true },
+      { v: res.lastTime ? '<bdi dir="ltr" style="font-size:1.3rem">' + ar(String(res.lastTime).slice(5, 16)) + "</bdi>" : "—", l: "آخر مشاركة" }
+    ].map(function (k) { return '<div class="kpi' + (k.c ? " c" : "") + '"><div class="v">' + k.v + '</div><div class="l">' + k.l + "</div></div>"; }).join("");
+
+    var ins = [];
+    if (res.ranked.length) {
+      var t = res.ranked[0], b = res.ranked[res.ranked.length - 1];
+      ins.push("<li>أعلى حاجة تدريبية: «" + esc(t.text) + "» بمتوسط <b>" + fmt(t.mean, 2) + "</b> (" + ar(t.highPct) + "٪ حاجتهن كبيرة أو ملحّة).</li>");
+      if (b.index !== t.index) ins.push("<li>أقل حاجة: «" + esc(b.text) + "» بمتوسط <b>" + fmt(b.mean, 2) + "</b>.</li>");
+      ins.push("<li>أعلى ثلاث مهارات: " + res.ranked.slice(0, 3).map(function (s) { return "«" + esc(s.text) + "»"; }).join("، ") + ".</li>");
+    }
+    var axs = res.axes.filter(function (a) { return a.mean != null; }).sort(function (x, y) { return y.mean - x.mean; });
+    if (axs.length > 1) ins.push("<li>أكثر المحاور حاجة: <b>" + esc(axs[0].label) + "</b> (" + fmt(axs[0].mean, 2) + ")، وأقلها: <b>" + esc(axs[axs.length - 1].label) + "</b> (" + fmt(axs[axs.length - 1].mean, 2) + ").</li>");
+    var pf = res.prefs;
+    function topPref(key) { var p = C.PREFS.filter(function (x) { return x.key === key; })[0], best = null; p.options.forEach(function (o) { if (!best || pf[key][o.code] > pf[key][best.code]) best = o; }); return best && pf[key][best.code] ? best : null; }
+    var ts = topPref("style"), tt = topPref("time"), td = topPref("duration");
+    if (ts) ins.push("<li>الأسلوب الأكثر تفضيلًا: <b>" + esc(ts.label) + "</b>" + (tt ? "، والوقت الأنسب: <b>" + esc(tt.label) + "</b>" : "") + (td ? "، والمدة: <b>" + esc(td.label) + "</b>" : "") + ".</li>");
+    if (res.n < 5) ins.push('<li class="warn">عدد المشاركات قليل (' + ar(res.n) + ") — لا تعمّمي النتائج.</li>");
+    $("insights").innerHTML = ins.join("");
+
+    $("axisBars").innerHTML = res.axes.map(function (a, i) { return hbar(a.label, a.mean == null ? 0 : a.mean / 5 * 100, fmt(a.mean, 2), i % 2 === 1); }).join("");
+    $("topBars").innerHTML = res.ranked.slice(0, 5).map(function (s) { return hbar(s.text, s.mean / 5 * 100, fmt(s.mean, 2), false); }).join("");
+
+    $("roleTable").innerHTML = "<tr><th>الوظيفة</th><th>العدد</th>" + C.AXES.map(function (a) { return "<th>" + esc(a.label) + "</th>"; }).join("") + "<th>المتوسط</th></tr>" +
+      res.byRole.map(function (r) {
+        return "<tr><td>" + esc(r.label) + (r.n && r.n < 5 ? ' <span class="small-n">(عدد قليل)</span>' : "") + "</td><td>" + ar(r.n) + "</td>" +
+          r.axes.map(function (v) { return '<td><span class="cellv" style="' + heat(v) + '">' + fmt(v, 2) + "</span></td>"; }).join("") +
+          '<td><span class="cellv" style="' + heat(r.mean) + '">' + fmt(r.mean, 2) + "</span></td></tr>";
+      }).join("");
+
+    $("roleDonut").innerHTML = dn(C.ROLES, res.roleCounts, res.n, "مشاركة");
+    $("stageDonut").innerHTML = dn(C.STAGES, res.stageCounts, res.n, "مشاركة");
+    $("expDonut").innerHTML = dn(C.EXPERIENCE, res.expCounts, res.n, "مشاركة");
+    $("attDonut").innerHTML = dn(C.ATTENDED, res.attCounts, res.n, "مشاركة");
+
+    /* الترتيب */
+    $("rankList").innerHTML = res.ranked.map(function (s, i) {
+      return hbar(ar(i + 1) + ". " + s.text, s.mean / 5 * 100, pair(fmt(s.mean, 2), ar(s.highPct) + "٪"), i < 3);
+    }).join("");
+    $("legend").innerHTML = C.SCALE.map(function (o) { return '<span><i class="' + NEED_CLS[o.value] + '"></i>' + esc(o.label) + "</span>"; }).join("");
+    $("statements").innerHTML = res.statements.map(function (s) {
+      var segs = "";
+      [5, 4, 3, 2, 1].forEach(function (v) {
+        var p = s.n ? s.counts[v] / s.n * 100 : 0;
+        if (p > 0) segs += '<div class="' + NEED_CLS[v] + '" style="width:' + p + '%" title="' + ar(s.counts[v]) + '">' + (p >= 9 ? ar(Math.round(p)) + "٪" : "") + "</div>";
+      });
+      return '<div class="stmt"><div class="head"><div class="t"><em>' + ar(s.index + 1) + "</em>" + esc(s.text) + '</div><div class="meta">المتوسط <b>' + fmt(s.mean, 2) + "</b> · حاجة كبيرة/ملحّة " + ar(s.highPct) + "٪</div></div><div class=\"stack\">" + segs + "</div></div>";
+    }).join("");
+
+    /* التفضيلات */
+    $("prefGrid").innerHTML = C.PREFS.map(function (p) {
+      var counts = res.prefs[p.key], mx = Math.max.apply(null, p.options.map(function (o) { return counts[o.code]; }).concat([1]));
+      return '<section class="panel-card"><h2>' + esc(p.label) + '</h2><p class="hint">' + (p.multi ? "الإجابات تقبل أكثر من خيار، والنسبة من عدد المشاركات." : "النسبة من عدد المشاركات.") + "</p>" +
+        p.options.map(function (o) { return hbar(o.label, counts[o.code] / mx * 100, pair(ar(counts[o.code]), ar(pct(counts[o.code], res.n)) + "٪"), false); }).join("") + "</section>";
+    }).join("");
+
+    /* الملاحظات */
+    $("openTabs").innerHTML = C.OPEN_QUESTIONS.map(function (q, i) {
+      return '<button class="tab" role="tab" type="button" data-i="' + i + '" aria-selected="' + (i === state.openTab) + '">' + esc(q.short) + "</button>";
+    }).join("");
+    renderAnswers();
+    var days = res.perDay, mx2 = days.reduce(function (m, d) { return Math.max(m, d.count); }, 1);
+    $("spark").innerHTML = days.map(function (d) { return '<div class="col" title="' + esc(d.day) + ": " + d.count + '" style="height:' + Math.max(6, d.count / mx2 * 100) + '%"><span>' + ar(d.count) + "</span></div>"; }).join("");
+    $("sparkLabels").innerHTML = days.length ? "<span>" + esc(days[0].day) + "</span><span>" + esc(days[days.length - 1].day) + "</span>" : "";
+  }
+
+  var roleL = {}; C.ROLES.forEach(function (r) { roleL[r.code] = r.label; });
+  function renderAnswers() {
+    var q = state.openTab, term = $("openSearch").value.trim();
+    var list = state.rows.filter(function (r) { return A.validRow(r, C) && (!state.role || r.role === state.role); }).filter(function (r) {
+      var t = (r.open && r.open[q]) || "";
+      return t && (!term || t.indexOf(term) >= 0);
+    });
+    $("openCount").textContent = ar(list.length) + " إجابة";
+    $("answers").innerHTML = list.length
+      ? list.slice().reverse().map(function (r) { return '<div class="answer">' + esc(r.open[q]) + "<small>" + esc(roleL[r.role] || r.role) + " · " + ar(String(r.t).slice(0, 16)) + "</small></div>"; }).join("")
+      : '<div class="empty">لا توجد إجابات مطابقة.</div>';
+  }
+  $("openTabs").addEventListener("click", function (e) {
+    var b = e.target.closest(".tab"); if (!b) return;
+    state.openTab = parseInt(b.getAttribute("data-i"), 10);
+    Array.prototype.forEach.call($("openTabs").children, function (t) { t.setAttribute("aria-selected", t === b ? "true" : "false"); });
+    renderAnswers();
+  });
+  $("openSearch").addEventListener("input", renderAnswers);
+  $("mainTabs").addEventListener("click", function (e) {
+    var b = e.target.closest(".tab"); if (!b) return;
+    var p = b.getAttribute("data-p");
+    Array.prototype.forEach.call($("mainTabs").children, function (t) { t.setAttribute("aria-selected", t === b ? "true" : "false"); });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-panel]"), function (el) { el.hidden = el.getAttribute("data-panel") !== p; });
+  });
+
+  /* ---------- جلسة سابقة ---------- */
+  var saved = ""; try { saved = sessionStorage.getItem(PW_KEY) || ""; } catch (x) {}
+  if (saved && C.SCRIPT_URL) {
+    $("loginBox").hidden = true;
+    fetchResults(saved).then(function (res) {
+      if (res && res.ok) enter(res.rows || [], res.generated);
+      else { try { sessionStorage.removeItem(PW_KEY); } catch (x) {} $("loginBox").hidden = false; }
+    }).catch(function () { $("loginBox").hidden = false; });
+  }
+})();
+</script>
+</body>
+</html>
